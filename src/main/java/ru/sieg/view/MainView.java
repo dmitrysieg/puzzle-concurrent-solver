@@ -38,12 +38,15 @@ public class MainView implements Runnable {
             return;
         }
         frameTime = curTime;
+
+        final Rectangle formSize = jFrame.getBounds();
+
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        g.drawImage(img, DEFAULT_WIDTH / 2 - img.getWidth() / 2, DEFAULT_HEIGHT / 2 - img.getHeight() / 2, null);
+        g.fillRect(0, 0, formSize.width, formSize.height);
+        g.drawImage(img, formSize.width / 2 - img.getWidth() / 2, formSize.height / 2 - img.getHeight() / 2, null);
         g.dispose();
         bufferStrategy.show();
-
+        System.out.println("show() end");
     }
 
     @Override

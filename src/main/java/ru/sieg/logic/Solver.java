@@ -171,7 +171,7 @@ public class Solver {
                             solver.clusterToConsider = null;
                         }
 
-                        final boolean forMe = arbitrageWhoTakesCluster(random);
+                        final boolean forMe = arbitrageWhoTakesCluster(myCluster, foundClusterInfo.getCluster(), random);
                         final Solver whoTakes = forMe ? this : solver;
 
                         final PiecesCluster resultCluster = mergeClusters(
@@ -272,8 +272,10 @@ public class Solver {
         return mine;
     }
 
-    private static boolean arbitrageWhoTakesCluster(final Random random) {
-        return random.nextBoolean();
+    private static boolean arbitrageWhoTakesCluster(final PiecesCluster mine,
+                                                    final PiecesCluster given,
+                                                    final Random random) {
+        return mine.size() > given.size();
     }
 
     // -------------------------------
