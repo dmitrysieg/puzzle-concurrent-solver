@@ -68,6 +68,13 @@ public class Profile implements Comparable<Profile> {
         if (o == null || this.profile.length() != o.profile.length()) {
             throw new IllegalStateException("Can't compare profiles " + this + " and " + o);
         }
+        return this.profile.compareTo(o.profile);
+    }
+
+    public int complimentaryCompareTo(final Profile o) {
+        if (o == null || this.profile.length() != o.profile.length()) {
+            throw new IllegalStateException("Can't compare profiles " + this + " and " + o);
+        }
         for (int i = 0; i < profile.length(); i++) {
             final int index1 = getIndex(profile.charAt(i));
             final int index2 = getIndex(o.profile.charAt(i));

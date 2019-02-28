@@ -44,7 +44,7 @@ public class SolverCompany {
         double[] priorities = calculateInitialPriorities();
 
 //        int i = 0;
-        while (!pieceRepository.getPieces().isEmpty() || sumMaxClusterSize() < piecesAmount) {
+        while (!pieceRepository.isEmpty() || sumMaxClusterSize() < piecesAmount) {
 
             final Solver solver = solvers.get(getRandomIndex(priorities, random));
 //            i = (i + 1) % solvers.size();
@@ -83,7 +83,7 @@ public class SolverCompany {
 
     private int sumMaxClusterSize() {
         final int max = solvers.stream().map(s -> s.getMaxCluster().map(Solver.PiecesCluster::size).orElse(0)).max(Integer::compareTo).orElse(0);
-        System.out.println("=" + max);
+//        System.out.println("=" + max);
         return max;
     }
 

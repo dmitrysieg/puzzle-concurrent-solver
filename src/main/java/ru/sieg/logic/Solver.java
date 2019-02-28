@@ -73,13 +73,15 @@ public class Solver {
         if (pieceRepository == null) {
             throw new IllegalStateException("pieceRepository is not set");
         }
-        while (!pieceRepository.getPieces().isEmpty()) {
+        while (!pieceRepository.isEmpty()) {
             doPieceApproach(view);
         }
         // log
     }
 
     public void doPieceApproach(final MainView view) {
+
+        long time = System.currentTimeMillis();
 
         if (clusterToConsider == null || boredState) {
             final Optional<Piece> newPiece = pieceRepository.popRandomPiece();
@@ -91,6 +93,7 @@ public class Solver {
                 if (!piecesClusters.isEmpty()) {
                     clusterToConsider = piecesClusters.get(random.nextInt(piecesClusters.size()));
                 } else {
+                    System.out.println("doPieceApproach(): " + (System.currentTimeMillis() - time) + " ms");
                     return;
                 }
             }
@@ -106,7 +109,7 @@ public class Solver {
         //
         //
         //
-        System.out.println(getMaxCluster().map(PiecesCluster::size).orElse(0));
+//        System.out.println(getMaxCluster().map(PiecesCluster::size).orElse(0));
         final Optional<Map.Entry<Point, Piece>> _airedPieceEntry = clusterToConsider.getRandomAired();
         if (!_airedPieceEntry.isPresent()) {
             throw new IllegalStateException("Can't obtain any aired piece");
@@ -117,14 +120,16 @@ public class Solver {
         final Point socket = airedPieceEntry.getKey().getBy(airedSide);
 
         final Side sideToFind = airedSide.getComplimentary();
-        final Profile searchedProfile = airedPieceEntry.getValue().getProfile(airedSide);
+        final Profile searchedProfile = airedPieceEntry.getValue().getProfile(airedSide).getComplementaryProfile();
 
-        final Optional<PieceRepository.PiecePlace> matched = pieceRepository.findPiece(sideToFind, searchedProfile);
+        final Optional<Piece> matched = pieceRepository.findPiece(sideToFind, searchedProfile);
                 //.orElseThrow(() -> new IllegalStateException("Can't find matching profile to " + searchedProfile));
         if (matched.isPresent()) {
-            final PieceRepository.PiecePlace piecePlace = matched.get();
-            clusterToConsider.piecesMap.put(socket, pieceRepository.pop(piecePlace));
+            final Piece piece = matched.get();
+            clusterToConsider.piecesMap.put(socket, pieceRepository.pop(piece));
+            //long ts = System.currentTimeMillis();
             view.show(clusterToConsider.toImage());
+            //System.out.println("show(): " + (System.currentTimeMillis() - ts) + " ms");
         } else {
             // искать сначала в своих кластерах, потом только в чужих.
             Optional<ConfluenceInfo> attemptToFindOwnClusters = askForCluster(searchedProfile, sideToFind, clusterToConsider);
@@ -148,6 +153,9 @@ public class Solver {
                 clusterToConsider = resultCluster;
             } else {
                 // try to obtain from other solvers
+
+                long time2 = System.currentTimeMillis();
+
                 boolean obtainedFromSolvers = false;
 
                 for (final Solver solver : getOtherSolvers()) {
@@ -165,7 +173,7 @@ public class Solver {
                         // too much intervention todo
                         solver.piecesClusters.remove(foundClusterInfo.getCluster());
                         if (solver.clusterToConsider == null) {
-                            System.out.println("solver.clusterToConsider == null");
+//                            System.out.println("solver.clusterToConsider == null");
                         }
                         if (foundClusterInfo.getCluster() != null && foundClusterInfo.getCluster().equals(solver.clusterToConsider)) {
                             solver.clusterToConsider = null;
@@ -189,6 +197,7 @@ public class Solver {
                         break;
                     }
                 }
+                System.out.println("doPA(): askForClusters(): " + (System.currentTimeMillis() - time2) + " ms");
                 if (!obtainedFromSolvers) {
                     //System.out.println(piecesClusters.get(0).toImage64());
                     throw new IllegalStateException("Can't either find a piece in repo, or ask any from other solvers");
@@ -202,6 +211,10 @@ public class Solver {
         }
 
         ownedPieces = recalculateOwnedPieces();
+
+        final long tt = (System.currentTimeMillis() - time);
+        if (tt < 20) {return;}
+        System.out.println("doPieceApproach(): " + tt + " ms");
     }
 
     private int recalculateOwnedPieces() {
@@ -247,6 +260,9 @@ public class Solver {
                               final Point socketPoint,
                               final Point confluencePoint,
                               final Side socketSide) {
+
+        long time = System.currentTimeMillis();
+
         //System.out.println(mine.toImageMerge64(given, socketPoint, confluencePoint, socketSide));
         view.show(mine.toImageMerge(given, socketPoint, confluencePoint, socketSide));
         final Point sideShift = socketPoint.getBy(socketSide);
@@ -255,7 +271,9 @@ public class Solver {
                 - confluencePoint.y + sideShift.y
         );
 
+        long time2 = System.currentTimeMillis();
         final List<Map.Entry<Point, Piece>> givenEntries = new ArrayList<>(given.piecesMap.entrySet());
+        System.out.println("mergeClusters(): new ArrayList(): " + (System.currentTimeMillis() - time2) + " ms");
         for (final Map.Entry<Point, Piece> entry : givenEntries) {
 
             final Point shifted = Point.of(
@@ -269,6 +287,8 @@ public class Solver {
             mine.piecesMap.put(shifted, entry.getValue());
             given.piecesMap.remove(entry.getKey());
         }
+
+        System.out.println("mergeClusters(): " + (System.currentTimeMillis() - time) + " ms");
         return mine;
     }
 
@@ -357,7 +377,7 @@ public class Solver {
         }
 
         Optional<Map.Entry<Point, Piece>> getRandomAired() {
-            List<Map.Entry<Point, Piece>> list = piecesMap.entrySet().stream()
+            return piecesMap.entrySet().stream()
                     .filter(entry -> {
                         final Point coord = entry.getKey();
                         return isAired(coord, Side.WEST) ||
@@ -365,9 +385,7 @@ public class Solver {
                                 isAired(coord, Side.NORTH) ||
                                 isAired(coord, Side.SOUTH);
                     })
-                    .collect(Collectors.toList());
-            Collections.shuffle(list, random);
-            return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+                    .findAny();
         }
 
         Side getRandomAiredSide(final Map.Entry<Point, Piece> pieceEntry) {

@@ -2,6 +2,8 @@ package ru.sieg.view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 
@@ -12,6 +14,7 @@ public class MainView implements Runnable {
     private JFrame jFrame;
     private BufferStrategy bufferStrategy;
     private long frameTime = 0;
+    private BufferedImage img;
 
     public static MainView create() {
         final MainView result = new MainView();
@@ -26,6 +29,12 @@ public class MainView implements Runnable {
     }
 
     public void show(final BufferedImage img) {
+        this.show(img, false);
+    }
+
+    public void show(final BufferedImage img, boolean force) {
+
+        this.img = img;
         if (bufferStrategy == null) {
             return;
         }
@@ -34,7 +43,7 @@ public class MainView implements Runnable {
             return;
         }
         final long curTime = System.currentTimeMillis();
-        if (curTime - frameTime < (1000 / 25)) {
+        if (!force && curTime - frameTime < (1000 / 25)) {
             return;
         }
         frameTime = curTime;
@@ -46,7 +55,6 @@ public class MainView implements Runnable {
         g.drawImage(img, formSize.width / 2 - img.getWidth() / 2, formSize.height / 2 - img.getHeight() / 2, null);
         g.dispose();
         bufferStrategy.show();
-        System.out.println("show() end");
     }
 
     @Override
@@ -59,5 +67,20 @@ public class MainView implements Runnable {
         jFrame.setIgnoreRepaint(true);
         jFrame.createBufferStrategy(2);
         bufferStrategy = jFrame.getBufferStrategy();
+
+        jFrame.getContentPane().addComponentListener(new ComponentListener() {
+
+            private void redraw() {
+                if (img != null) {
+                    show(img, true);
+                }
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {redraw();}
+            @Override public void componentMoved(ComponentEvent e) {}
+            @Override public void componentShown(ComponentEvent e) {redraw();}
+            @Override public void componentHidden(ComponentEvent e) {}
+        });
     }
 }
