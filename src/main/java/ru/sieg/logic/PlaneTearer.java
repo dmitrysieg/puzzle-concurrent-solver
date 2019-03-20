@@ -24,7 +24,7 @@ public class PlaneTearer {
         for (int y = 0; y < plane.getVerticalSize(); y++) {
             for (int x = 0; x < plane.getHorizontalSize(); x++) {
 
-                final Piece piece = new Piece(plane.getValue(x, y));
+                final Piece piece = new Piece(plane.getValue(x, y).getRGB());
                 cachedPieces[0][x] = piece;
 
                 if (y == 0) {

@@ -14,6 +14,9 @@ public class SolverCompany {
 
     private final int piecesAmount;
     private final MainView view;
+    private final SnapshotController snapshotController;
+
+    private boolean paused;
 
     public SolverCompany(final int amount,
                          final int piecesAmount,
@@ -25,10 +28,19 @@ public class SolverCompany {
             solvers.add(solver);
         }
         this.view = view;
+        this.snapshotController = new SnapshotController();
+    }
+
+    public void takeClustersSnapshot() {
+        snapshotController.takeSnapshot(solvers);
     }
 
     public Collection<Solver> getSolvers() {
         return solvers;
+    }
+
+    public void togglePause() {
+        paused = !paused;
     }
 
     public Plane solve(final PieceRepository pieceRepository) {
@@ -45,6 +57,14 @@ public class SolverCompany {
 
 //        int i = 0;
         while (!pieceRepository.isEmpty() || sumMaxClusterSize() < piecesAmount) {
+
+            while (paused) {
+                try {
+                    Thread.sleep(25);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
             final Solver solver = solvers.get(getRandomIndex(priorities, random));
 //            i = (i + 1) % solvers.size();

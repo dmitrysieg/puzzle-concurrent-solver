@@ -1,9 +1,13 @@
 package ru.sieg.view;
 
+import ru.sieg.logic.SolverCompany;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 
@@ -16,10 +20,16 @@ public class MainView implements Runnable {
     private long frameTime = 0;
     private BufferedImage img;
 
+    private SolverCompany solverCompany;
+
     public static MainView create() {
         final MainView result = new MainView();
         SwingUtilities.invokeLater(result);
         return result;
+    }
+
+    public void setSolverCompany(SolverCompany solverCompany) {
+        this.solverCompany = solverCompany;
     }
 
     private void setDefaultSize() {
@@ -28,11 +38,11 @@ public class MainView implements Runnable {
                 DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
-    public void show(final BufferedImage img) {
-        this.show(img, false);
+    public void show(final BufferedImage img, final String title) {
+        this.show(img, title, false);
     }
 
-    public void show(final BufferedImage img, boolean force) {
+    public void show(final BufferedImage img, final String title, boolean force) {
 
         this.img = img;
         if (bufferStrategy == null) {
@@ -55,6 +65,8 @@ public class MainView implements Runnable {
         g.drawImage(img, formSize.width / 2 - img.getWidth() / 2, formSize.height / 2 - img.getHeight() / 2, null);
         g.dispose();
         bufferStrategy.show();
+
+        jFrame.setTitle(title);
     }
 
     @Override
@@ -72,7 +84,7 @@ public class MainView implements Runnable {
 
             private void redraw() {
                 if (img != null) {
-                    show(img, true);
+                    show(img, "", true);
                 }
             }
 
@@ -81,6 +93,25 @@ public class MainView implements Runnable {
             @Override public void componentMoved(ComponentEvent e) {}
             @Override public void componentShown(ComponentEvent e) {redraw();}
             @Override public void componentHidden(ComponentEvent e) {}
+        });
+
+        jFrame.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.getKeyChar() == ' ') {
+                    solverCompany.togglePause();
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
         });
     }
 }

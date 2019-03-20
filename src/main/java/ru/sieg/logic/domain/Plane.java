@@ -1,18 +1,32 @@
 package ru.sieg.logic.domain;
 
-import java.util.Random;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 
 public class Plane {
 
     private final int horizontalSize;
     private final int verticalSize;
-    private final int[][] values;
+    private final BufferedImage img;
 
     public Plane(final int horizontalSize, final int verticalSize) {
         this.horizontalSize = horizontalSize;
         this.verticalSize = verticalSize;
 
-        values = new int[verticalSize][horizontalSize];
+        try {
+            final URL puzzleUrl = getClass().getClassLoader().getResource("puzzle.jpg");
+            if (puzzleUrl != null) {
+                img = ImageIO.read(puzzleUrl);
+            } else {
+                throw new IOException("File not found");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException(e);
+        }
     }
 
     public int getHorizontalSize() {
@@ -23,21 +37,11 @@ public class Plane {
         return verticalSize;
     }
 
-    public int[][] getValues() {
-        return values;
-    }
-
-    public int getValue(final int x, final int y) {
-        return values[y][x];
+    public Color getValue(final int x, final int y) {
+        return new Color(img.getRGB(x, y));
     }
 
     public Plane initValues() {
-        final Random random = new Random(Long.MAX_VALUE - System.currentTimeMillis());
-        for (int y = 0; y < verticalSize; y++) {
-            for (int x = 0; x < horizontalSize; x++) {
-                values[y][x] = random.nextInt();
-            }
-        }
         return this;
     }
 }

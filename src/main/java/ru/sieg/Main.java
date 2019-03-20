@@ -18,6 +18,7 @@ public class Main {
         final PieceRepository pieceRepository = PlaneTearer.tear(plane);
 
         final SolverCompany solverCompany = new SolverCompany(10, HORIZONTAL_SIZE * VERTICAL_SIZE, view);
+        view.setSolverCompany(solverCompany);
 
         final Plane resultPlane = solverCompany.solve(pieceRepository);
 

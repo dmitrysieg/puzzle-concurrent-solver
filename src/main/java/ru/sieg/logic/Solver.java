@@ -59,6 +59,12 @@ public class Solver {
         return ownedPieces;
     }
 
+    public String getPiecesAsStr() {
+        return getSolverCompany().getSolvers().stream()
+                .map(s -> String.valueOf(s.getPiecesClusters().size()))
+                .collect(Collectors.joining(" "));
+    }
+
     public void pointToRepository(final PieceRepository pieceRepository) {
         this.pieceRepository = pieceRepository;
 //        try {
@@ -128,7 +134,7 @@ public class Solver {
             final Piece piece = matched.get();
             clusterToConsider.piecesMap.put(socket, pieceRepository.pop(piece));
             //long ts = System.currentTimeMillis();
-            view.show(clusterToConsider.toImage());
+            view.show(clusterToConsider.toImage(), getPiecesAsStr());
             //System.out.println("show(): " + (System.currentTimeMillis() - ts) + " ms");
         } else {
             // искать сначала в своих кластерах, потом только в чужих.
@@ -206,8 +212,9 @@ public class Solver {
         }
 
         // set to bored - strategy can vary todo
-        if (random.nextInt(1000) > 900) {
+        if (random.nextInt(1000) > 997) {
             boredState = true;
+            System.out.println("Got bored!");
         }
 
         ownedPieces = recalculateOwnedPieces();
@@ -264,7 +271,7 @@ public class Solver {
         long time = System.currentTimeMillis();
 
         //System.out.println(mine.toImageMerge64(given, socketPoint, confluencePoint, socketSide));
-        view.show(mine.toImageMerge(given, socketPoint, confluencePoint, socketSide));
+        view.show(mine.toImageMerge(given, socketPoint, confluencePoint, socketSide), getPiecesAsStr());
         final Point sideShift = socketPoint.getBy(socketSide);
         final Point shift = Point.of(
                 - confluencePoint.x + sideShift.x,
@@ -367,6 +374,18 @@ public class Solver {
             return piecesMap.size();
         }
 
+        public Rectangle getBoundingBox() {
+            int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE,
+                    minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+            for (Point p : piecesMap.keySet()) {
+                minX = p.x < minX ? p.x : minX;
+                maxX = p.x > maxX ? p.x : maxX;
+                minY = p.y < minY ? p.y : minY;
+                maxY = p.y > maxY ? p.y : maxY;
+            }
+            return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        }
+
         public Piece getFirst() {
             return piecesMap.get(Point.ZERO);
         }
@@ -377,7 +396,7 @@ public class Solver {
         }
 
         Optional<Map.Entry<Point, Piece>> getRandomAired() {
-            return piecesMap.entrySet().stream()
+            final List<Map.Entry<Point, Piece>> list = piecesMap.entrySet().stream()
                     .filter(entry -> {
                         final Point coord = entry.getKey();
                         return isAired(coord, Side.WEST) ||
@@ -385,7 +404,12 @@ public class Solver {
                                 isAired(coord, Side.NORTH) ||
                                 isAired(coord, Side.SOUTH);
                     })
-                    .findAny();
+                    .collect(Collectors.toList());
+            if (list.isEmpty()) {
+                return Optional.empty();
+            }
+            Collections.shuffle(list, random);
+            return Optional.of(list.get(random.nextInt(list.size())));
         }
 
         Side getRandomAiredSide(final Map.Entry<Point, Piece> pieceEntry) {
@@ -436,7 +460,7 @@ public class Solver {
                 final int x = p.x - fromX;
                 final int y = p.y - fromY;
                 Graphics2D g = img.createGraphics();
-                g.setColor(new Color(0xFF00FF00));
+                g.setColor(new Color(piecesMap.get(p).getValue()));
                 g.fillRect(x * IMG_SIZE, y * IMG_SIZE, IMG_SIZE, IMG_SIZE);
             }
 
@@ -492,14 +516,14 @@ public class Solver {
             final BufferedImage img = new BufferedImage(w * IMG_SIZE, h * IMG_SIZE, BufferedImage.TYPE_INT_ARGB);
 
             Graphics2D g = img.createGraphics();
-            g.setColor(new Color(0x40FF0000, true));
+
             for (final Point p : piecesMap.keySet()) {
                 final int x = p.x - fromX;
                 final int y = p.y - fromY;
+                g.setColor(new Color(0x40000000 | piecesMap.get(p).getValue(), true));
                 g.fillRect(x * IMG_SIZE, y * IMG_SIZE, IMG_SIZE, IMG_SIZE);
             }
 
-            g.setColor(new Color(0x4000FF00, true));
             for (final Point p : given.piecesMap.keySet()) {
                 final Point shifted = Point.of(
                         p.x + shift.x,
@@ -507,6 +531,7 @@ public class Solver {
                 );
                 final int x = shifted.x - fromX;
                 final int y = shifted.y - fromY;
+                g.setColor(new Color(0xFF000000 | given.piecesMap.get(p).getValue(), true));
                 g.fillRect(x * IMG_SIZE, y * IMG_SIZE, IMG_SIZE, IMG_SIZE);
             }
 
