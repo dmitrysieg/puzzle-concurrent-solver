@@ -53,9 +53,8 @@ public class SolverCompany {
             solver.pointToRepository(pieceRepository);
         });
 
-        double[] priorities = calculateInitialPriorities();
+//        double[] priorities = calculateInitialPriorities();
 
-//        int i = 0;
         while (!pieceRepository.isEmpty() || sumMaxClusterSize() < piecesAmount) {
 
             while (paused) {
@@ -66,12 +65,13 @@ public class SolverCompany {
                 }
             }
 
-            final Solver solver = solvers.get(getRandomIndex(priorities, random));
-//            i = (i + 1) % solvers.size();
+//            final int index = getRandomIndex(priorities, random);
+            final int index = getRandomIndexSimple(random);
+            final Solver solver = solvers.get(index);
 
             solver.doPieceApproach(view);
 
-            priorities = calculatePriorities();
+//            priorities = calculatePriorities();
         }
 
         System.out.println("solve(): " + (System.currentTimeMillis() - time) + " ms");
@@ -103,7 +103,6 @@ public class SolverCompany {
 
     private int sumMaxClusterSize() {
         final int max = solvers.stream().map(s -> s.getMaxCluster().map(Solver.PiecesCluster::size).orElse(0)).max(Integer::compareTo).orElse(0);
-//        System.out.println("=" + max);
         return max;
     }
 
@@ -122,5 +121,9 @@ public class SolverCompany {
             }
         }
         return weights.length - 1;
+    }
+
+    private int getRandomIndexSimple(final Random random) {
+        return random.nextInt(solvers.size());
     }
 }

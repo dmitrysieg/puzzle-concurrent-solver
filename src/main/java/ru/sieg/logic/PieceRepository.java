@@ -38,7 +38,7 @@ public class PieceRepository {
             return Optional.empty();
         }
         if (pieces.size() == 1) {
-            final Piece piece = pieces.stream().findFirst().get();
+            final Piece piece = pieces.getFirst();
             pieces.remove(piece);
             return Optional.of(piece);
         }
@@ -54,13 +54,6 @@ public class PieceRepository {
     }
 
     public Optional<Piece> findPiece(final Side searchedSide, final Profile searchedProfile) {
-
-        long ms = System.currentTimeMillis();
-
-        final Optional<Piece> result = pieces.searchByProfile(searchedProfile, searchedSide);
-
-//        System.out.println("findPiece(): " + (System.currentTimeMillis() - ms) + "ms ");
-
-        return result;
+        return pieces.searchByProfile(searchedProfile, searchedSide);
     }
 }

@@ -5,6 +5,7 @@ import ru.sieg.logic.domain.Profile;
 import ru.sieg.logic.domain.Side;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -14,11 +15,22 @@ public class IndexMap {
 
     private Map<Side, TreeMap<Profile, List<Piece>>> side_index;
 
+    /**
+     * Added to speed up operations irrelative to particular sides.
+     */
+    private TreeMap<Profile, List<Piece>> ref_index;
+
+    /**
+     * Added to speep up size(), isEmpty() and akin operations.
+     */
+    private AtomicInteger size = new AtomicInteger();
+
     public IndexMap() {
         side_index = new HashMap<>();
         for (final Side side : Side.values()) {
             side_index.put(side, new TreeMap<>());
         }
+        ref_index = side_index.get(Side.NORTH);
     }
 
     public IndexMap(final Collection<Piece> pieces) {
@@ -27,11 +39,11 @@ public class IndexMap {
     }
 
     public int size() {
-        return (int) stream().count();
+        return size.get();
     }
 
     public boolean isEmpty() {
-        return size() <= 0;
+        return size.get() <= 0;
     }
 
     public void add(final Piece piece) {
@@ -45,14 +57,23 @@ public class IndexMap {
             }
             side_index.get(side).get(profile).add(piece);
         }
+        size.incrementAndGet();
     }
 
     public Stream<Piece> stream() {
-        return side_index.get(Side.NORTH).values().stream().flatMap(Collection::stream);
+        return ref_index.values().stream().flatMap(Collection::stream);
+    }
+
+    public Piece getFirst() {
+        final Iterator<List<Piece>> it = ref_index.values().iterator();
+        if (it.hasNext()) {
+            return it.next().get(0);
+        }
+        return null;
     }
 
     private int indexSize(final Side side) {
-        return (int) side_index.get(side).values().stream().flatMap(Collection::stream).count();
+        return (int) side_index.get(side).values().stream().mapToLong(Collection::size).sum();
     }
 
     public void remove(final Piece piece) {
@@ -62,9 +83,11 @@ public class IndexMap {
             final Profile profile = piece.getProfile(side);
             final List<Piece> bucket = index.get(profile);
             bucket.remove(piece);
-//            System.out.print(indexSize(side) + " ");
+            if (bucket.isEmpty()) {
+                index.remove(profile);
+            }
         }
-//        System.out.println();
+        size.decrementAndGet();
     }
 
     public Optional<Piece> searchByProfile(final Profile profile, final Side side) {

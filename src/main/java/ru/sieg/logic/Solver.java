@@ -62,7 +62,7 @@ public class Solver {
     public String getPiecesAsStr() {
         return getSolverCompany().getSolvers().stream()
                 .map(s -> String.valueOf(s.getPiecesClusters().size()))
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.joining(" ")) + " (=" + pieceRepository.size() + ")";
     }
 
     public void pointToRepository(final PieceRepository pieceRepository) {
@@ -90,7 +90,9 @@ public class Solver {
         long time = System.currentTimeMillis();
 
         if (clusterToConsider == null || boredState) {
+
             final Optional<Piece> newPiece = pieceRepository.popRandomPiece();
+
             if (newPiece.isPresent()) {
                 clusterToConsider = new PiecesCluster(newPiece.get());
                 piecesClusters.add(clusterToConsider);
@@ -99,7 +101,6 @@ public class Solver {
                 if (!piecesClusters.isEmpty()) {
                     clusterToConsider = piecesClusters.get(random.nextInt(piecesClusters.size()));
                 } else {
-                    System.out.println("doPieceApproach(): " + (System.currentTimeMillis() - time) + " ms");
                     return;
                 }
             }
