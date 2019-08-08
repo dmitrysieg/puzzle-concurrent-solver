@@ -2,6 +2,7 @@ package ru.sieg.logic;
 
 import net.sf.image4j.codec.bmp.BMPEncoder;
 import ru.sieg.logic.domain.Piece;
+import ru.sieg.logic.domain.Plane;
 import ru.sieg.logic.domain.Profile;
 import ru.sieg.logic.domain.Side;
 import ru.sieg.view.MainView;
@@ -89,23 +90,9 @@ public class Solver {
 
         long time = System.currentTimeMillis();
 
-        if (clusterToConsider == null || boredState) {
-
-            final Optional<Piece> newPiece = pieceRepository.popRandomPiece();
-
-            if (newPiece.isPresent()) {
-                clusterToConsider = new PiecesCluster(newPiece.get());
-                piecesClusters.add(clusterToConsider);
-                boredState = false;
-            } else {
-                if (!piecesClusters.isEmpty()) {
-                    clusterToConsider = piecesClusters.get(random.nextInt(piecesClusters.size()));
-                } else {
-                    return;
-                }
-            }
-        } else {
-            clusterToConsider = piecesClusters.get(random.nextInt(piecesClusters.size()));
+        clusterToConsider = doSelectCluster();
+        if (clusterToConsider == null) {
+            return;
         }
 
         // do process cluster
@@ -113,10 +100,7 @@ public class Solver {
         // 1) select random element of the cluster, connected with air;
         // 2) find an element in the repo, matching with the profile of the selected element;
         // 3) connect;
-        //
-        //
-        //
-//        System.out.println(getMaxCluster().map(PiecesCluster::size).orElse(0));
+
         final Optional<Map.Entry<Point, Piece>> _airedPieceEntry = clusterToConsider.getRandomAired();
         if (!_airedPieceEntry.isPresent()) {
             throw new IllegalStateException("Can't obtain any aired piece");
@@ -223,6 +207,28 @@ public class Solver {
         final long tt = (System.currentTimeMillis() - time);
         if (tt < 20) {return;}
         System.out.println("doPieceApproach(): " + tt + " ms");
+    }
+
+    private PiecesCluster doSelectCluster() {
+
+        if (clusterToConsider == null || boredState) {
+
+            final Optional<Piece> newPiece = pieceRepository.popRandomPiece();
+
+            if (newPiece.isPresent()) {
+                final PiecesCluster result = new PiecesCluster(newPiece.get());
+                piecesClusters.add(result);
+                boredState = false;
+                return result;
+            }
+            if (!piecesClusters.isEmpty()) {
+                return piecesClusters.get(random.nextInt(piecesClusters.size()));
+            }
+            System.out.println("Nothing to pick up.");
+            return null;
+        }
+
+        return piecesClusters.get(random.nextInt(piecesClusters.size()));
     }
 
     private int recalculateOwnedPieces() {
@@ -553,6 +559,19 @@ public class Solver {
                 e.printStackTrace();
             }
             return "data:image/bmp;base64," + Base64.getEncoder().encodeToString(bs.toByteArray());
+        }
+
+        public Plane toPlane() {
+
+            final Rectangle box = getBoundingBox();
+            final BufferedImage img = new BufferedImage(box.width, box.height, BufferedImage.TYPE_INT_ARGB);
+
+            for (int i = 0; i < box.height; i++) {
+                for (int j = 0; j < box.width; j++) {
+                    img.setRGB(j, i, piecesMap.get(Point.of(box.x + j, box.y + i)).getValue());
+                }
+            }
+            return new Plane(box.width, box.height, img);
         }
     }
 

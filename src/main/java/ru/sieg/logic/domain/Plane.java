@@ -12,12 +12,18 @@ public class Plane {
     private final int verticalSize;
     private final BufferedImage img;
 
-    public Plane(final int horizontalSize, final int verticalSize) {
+    public Plane(final int horizontalSize, final int verticalSize, final BufferedImage img) {
+        this.horizontalSize = horizontalSize;
+        this.verticalSize = verticalSize;
+        this.img = img;
+    }
+
+    public Plane(final int horizontalSize, final int verticalSize, final String imgName) {
         this.horizontalSize = horizontalSize;
         this.verticalSize = verticalSize;
 
         try {
-            final URL puzzleUrl = getClass().getClassLoader().getResource("puzzle.jpg");
+            final URL puzzleUrl = getClass().getClassLoader().getResource(imgName);
             if (puzzleUrl != null) {
                 img = ImageIO.read(puzzleUrl);
             } else {

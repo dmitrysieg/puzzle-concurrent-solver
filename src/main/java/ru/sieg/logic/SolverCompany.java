@@ -75,7 +75,12 @@ public class SolverCompany {
         }
 
         System.out.println("solve(): " + (System.currentTimeMillis() - time) + " ms");
-        return null;
+        return solvers.stream()
+                .filter(s -> !s.getPiecesClusters().isEmpty())
+                .findFirst()
+                .map(solver -> solver.getPiecesClusters().get(0))
+                .map(Solver.PiecesCluster::toPlane)
+                .orElse(null);
     }
 
     private double[] calculatePriorities() {

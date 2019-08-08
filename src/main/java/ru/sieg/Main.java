@@ -13,7 +13,7 @@ public class Main {
 
         final MainView view = MainView.create();
 
-        final Plane plane = new Plane(HORIZONTAL_SIZE, VERTICAL_SIZE).initValues();
+        final Plane plane = new Plane(HORIZONTAL_SIZE, VERTICAL_SIZE, "puzzle.jpg").initValues();
 
         final PieceRepository pieceRepository = PlaneTearer.tear(plane);
 
