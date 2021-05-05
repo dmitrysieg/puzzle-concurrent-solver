@@ -28,6 +28,7 @@ public class SolverCompany {
             solvers.add(solver);
         }
         this.view = view;
+        view.setSolverCompany(this);
         this.snapshotController = new SnapshotController();
     }
 

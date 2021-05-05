@@ -6,19 +6,15 @@ import ru.sieg.view.MainView;
 
 public class Main {
 
-    private static final int HORIZONTAL_SIZE = 320;
-    private static final int VERTICAL_SIZE = 240;
-
     public static void main(String[] args) {
 
         final MainView view = MainView.create();
 
-        final Plane plane = new Plane(HORIZONTAL_SIZE, VERTICAL_SIZE, "puzzle.jpg").initValues();
+        final Plane plane = new PlaneLoader().load("puzzle.jpg");
 
         final PieceRepository pieceRepository = PlaneTearer.tear(plane);
 
-        final SolverCompany solverCompany = new SolverCompany(10, HORIZONTAL_SIZE * VERTICAL_SIZE, view);
-        view.setSolverCompany(solverCompany);
+        final SolverCompany solverCompany = new SolverCompany(10, plane.getPiecesAmount(), view);
 
         final Plane resultPlane = solverCompany.solve(pieceRepository);
 
