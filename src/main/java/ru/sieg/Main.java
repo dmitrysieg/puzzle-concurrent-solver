@@ -13,8 +13,10 @@ public class Main {
         final Plane plane = new PlaneLoader().load("puzzle.jpg");
 
         final PieceRepository pieceRepository = PlaneTearer.tear(plane);
+        view.put(pieceRepository);
 
         final SolverCompany solverCompany = new SolverCompany(10, plane.getPiecesAmount(), view);
+        view.put(solverCompany);
 
         final Plane resultPlane = solverCompany.solve(pieceRepository);
 

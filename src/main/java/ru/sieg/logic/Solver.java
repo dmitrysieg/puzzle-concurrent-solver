@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Solver {
@@ -42,8 +43,16 @@ public class Solver {
         return piecesClusters;
     }
 
+    public int getPiecesClustersSize() {
+        return piecesClusters.size();
+    }
+
     public SolverCompany getSolverCompany() {
         return solverCompany;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Collection<Solver> getOtherSolvers() {
@@ -119,7 +128,9 @@ public class Solver {
             final Piece piece = matched.get();
             clusterToConsider.piecesMap.put(socket, pieceRepository.pop(piece));
             //long ts = System.currentTimeMillis();
-            view.show(clusterToConsider.toImage(), getPiecesAsStr());
+
+            view.update(this, clusterToConsider.toImage(), getPiecesAsStr());
+
             //System.out.println("show(): " + (System.currentTimeMillis() - ts) + " ms");
         } else {
             // искать сначала в своих кластерах, потом только в чужих.
@@ -278,7 +289,10 @@ public class Solver {
         long time = System.currentTimeMillis();
 
         //System.out.println(mine.toImageMerge64(given, socketPoint, confluencePoint, socketSide));
-        view.show(mine.toImageMerge(given, socketPoint, confluencePoint, socketSide), getPiecesAsStr());
+
+        final BufferedImage mergedImage = mine.toImageMerge(given, socketPoint, confluencePoint, socketSide);
+        view.update(this, mergedImage, getPiecesAsStr());
+
         final Point sideShift = socketPoint.getBy(socketSide);
         final Point shift = Point.of(
                 - confluencePoint.x + sideShift.x,
@@ -310,6 +324,19 @@ public class Solver {
                                                     final PiecesCluster given,
                                                     final Random random) {
         return mine.size() > given.size();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof Solver) || this.getName() == null) {
+            return false;
+        }
+        return this.getName().equals(((Solver) obj).getName());
     }
 
     // -------------------------------
@@ -363,15 +390,15 @@ public class Solver {
         }
     }
 
-    static class PiecesCluster {
+    public static class PiecesCluster {
 
-        private static final int IMG_SIZE = 2;
+        public static final int IMG_SIZE = 2;
 
         private final Map<Point, Piece> piecesMap;
         private final Random random;
 
         PiecesCluster(final Piece first) {
-            piecesMap = new HashMap<>();
+            piecesMap = new ConcurrentHashMap<>();
             piecesMap.put(Point.ZERO, first);
 
             random = new Random(System.currentTimeMillis());

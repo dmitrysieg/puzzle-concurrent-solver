@@ -1,26 +1,29 @@
 package ru.sieg.view;
 
+import ru.sieg.logic.PieceRepository;
+import ru.sieg.logic.Solver;
 import ru.sieg.logic.SolverCompany;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.awt.Frame.MAXIMIZED_BOTH;
 
 public class MainView implements Runnable {
 
-    private int DEFAULT_WIDTH = 640;
-    private int DEFAULT_HEIGHT = 480;
     private JFrame jFrame;
     private BufferStrategy bufferStrategy;
     private long frameTime = 0;
     private BufferedImage img;
 
+    private PieceRepository pieceRepository;
     private SolverCompany solverCompany;
+    private Map<Solver, SolverView> solverViewMap = new ConcurrentHashMap<>();
 
     public static MainView create() {
         final MainView result = new MainView();
@@ -28,14 +31,33 @@ public class MainView implements Runnable {
         return result;
     }
 
-    public void setSolverCompany(SolverCompany solverCompany) {
+    public void put(SolverCompany solverCompany) {
         this.solverCompany = solverCompany;
+
+        final Container container = jFrame.getContentPane();
+
+        solverCompany.getSolvers().forEach(s -> {
+            final SolverView solverView = new SolverView(s);
+            solverViewMap.put(s, solverView);
+            container.add(solverView);
+        });
+    }
+
+    public void put(PieceRepository pieceRepository) {
+        this.pieceRepository = pieceRepository;
+
+        final Container container = jFrame.getContentPane();
+        container.add(new PieceRepositoryView(pieceRepository));
     }
 
     private void setDefaultSize() {
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        jFrame.setBounds(screenSize.width / 2 - DEFAULT_WIDTH / 2, screenSize.height / 2 - DEFAULT_HEIGHT / 2,
-                DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        jFrame.setBounds(0, 0, screenSize.width, screenSize.height);
+    }
+
+    public void update(final Solver solver, final BufferedImage img, final String title) {
+        this.solverViewMap.get(solver).updateClip();
+        jFrame.setTitle(title);
     }
 
     public void show(final BufferedImage img, final String title) {
@@ -74,26 +96,16 @@ public class MainView implements Runnable {
         jFrame = new JFrame();
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setDefaultSize();
+        jFrame.setExtendedState(MAXIMIZED_BOTH);
         jFrame.setVisible(true);
+
+        final Container container = jFrame.getContentPane();
+        final FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER);
+        container.setLayout(flowLayout);
 
         jFrame.setIgnoreRepaint(true);
         jFrame.createBufferStrategy(2);
         bufferStrategy = jFrame.getBufferStrategy();
-
-        jFrame.getContentPane().addComponentListener(new ComponentListener() {
-
-            private void redraw() {
-                if (img != null) {
-                    show(img, "", true);
-                }
-            }
-
-            @Override
-            public void componentResized(ComponentEvent e) {redraw();}
-            @Override public void componentMoved(ComponentEvent e) {}
-            @Override public void componentShown(ComponentEvent e) {redraw();}
-            @Override public void componentHidden(ComponentEvent e) {}
-        });
 
         jFrame.addKeyListener(new KeyListener() {
             @Override
@@ -113,5 +125,11 @@ public class MainView implements Runnable {
 
             }
         });
+
+        final Timer timer = new Timer(25, e -> {
+            jFrame.getContentPane().doLayout();
+            jFrame.repaint();
+        });
+        timer.start();
     }
 }
