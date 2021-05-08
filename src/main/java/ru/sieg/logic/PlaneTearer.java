@@ -63,7 +63,7 @@ public class PlaneTearer {
 
         pieceRepository.shuffle();
 
-        System.out.println("tear(): " + (System.currentTimeMillis() - time) + " ms");
+        System.out.println("[Tearer]\t\ttear(): " + (System.currentTimeMillis() - time) + " ms");
         return pieceRepository;
     }
 }

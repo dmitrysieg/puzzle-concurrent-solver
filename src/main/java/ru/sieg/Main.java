@@ -22,6 +22,6 @@ public class Main {
 
         final boolean result = PlaneVerifier.matches(plane, resultPlane);
 
-        System.out.println("Result: planes " + (result ? "match" : "do not match"));
+        System.out.println("[System]\t\tResult: planes " + (result ? "match" : "do not match"));
     }
 }

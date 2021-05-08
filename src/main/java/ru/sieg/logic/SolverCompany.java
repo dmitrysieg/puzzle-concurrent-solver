@@ -74,7 +74,7 @@ public class SolverCompany {
 //            priorities = calculatePriorities();
         }
 
-        System.out.println("solve(): " + (System.currentTimeMillis() - time) + " ms");
+        System.out.println("[Company]\t\tsolve(): " + (System.currentTimeMillis() - time) + " ms");
         return solvers.stream()
                 .filter(s -> !s.getPiecesClusters().isEmpty())
                 .findFirst()

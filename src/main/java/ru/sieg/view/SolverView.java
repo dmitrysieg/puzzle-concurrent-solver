@@ -38,12 +38,14 @@ public class SolverView extends JPanel {
                     maxY.set(Math.max(maxY.get(), boundingBox.height));
                 });
 
-        this.width = maxX.get();
+        // 3 = 1 gap + 1 logo + 1 gap.
+        this.width = Math.max(maxX.get(), 3 * solverLogo.getImg().getHeight());
+        // 2 = 1 logo + 1 gap.
         this.height = maxY.get() + solverLogo.getImg().getHeight() * 2;
         this.setPreferredSize(new Dimension(this.width * Solver.PiecesCluster.IMG_SIZE,
                 this.height * Solver.PiecesCluster.IMG_SIZE));
 
-        System.out.println("updateClip():\t\t" + maxX.get() + "\t\t" + maxY.get());
+        //System.out.println(this.solver.getName() + "\t\tupdateClip():\t\t" + maxX.get() + "\t\t" + maxY.get());
     }
 
     @Override
@@ -76,7 +78,7 @@ public class SolverView extends JPanel {
         // todo calculate rows
 
         solver.getPiecesClusters().stream()
-                .sorted(Comparator.comparingInt(Solver.PiecesCluster::size))
+                .sorted(Comparator.comparingInt(Solver.PiecesCluster::size).reversed())
                 .forEachOrdered(pc -> {
                     final BufferedImage clusterImage = pc.toImage();
 

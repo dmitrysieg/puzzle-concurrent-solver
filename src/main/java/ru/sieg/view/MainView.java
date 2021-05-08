@@ -7,8 +7,6 @@ import ru.sieg.logic.SolverCompany;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,11 +15,7 @@ import static java.awt.Frame.MAXIMIZED_BOTH;
 public class MainView implements Runnable {
 
     private JFrame jFrame;
-    private BufferStrategy bufferStrategy;
-    private long frameTime = 0;
-    private BufferedImage img;
 
-    private PieceRepository pieceRepository;
     private SolverCompany solverCompany;
     private Map<Solver, SolverView> solverViewMap = new ConcurrentHashMap<>();
 
@@ -44,8 +38,6 @@ public class MainView implements Runnable {
     }
 
     public void put(PieceRepository pieceRepository) {
-        this.pieceRepository = pieceRepository;
-
         final Container container = jFrame.getContentPane();
         container.add(new PieceRepositoryView(pieceRepository));
     }
@@ -55,40 +47,8 @@ public class MainView implements Runnable {
         jFrame.setBounds(0, 0, screenSize.width, screenSize.height);
     }
 
-    public void update(final Solver solver, final BufferedImage img, final String title) {
+    public void update(final Solver solver) {
         this.solverViewMap.get(solver).updateClip();
-        jFrame.setTitle(title);
-    }
-
-    public void show(final BufferedImage img, final String title) {
-        this.show(img, title, false);
-    }
-
-    public void show(final BufferedImage img, final String title, boolean force) {
-
-        this.img = img;
-        if (bufferStrategy == null) {
-            return;
-        }
-        final Graphics g = bufferStrategy.getDrawGraphics();
-        if (g == null) {
-            return;
-        }
-        final long curTime = System.currentTimeMillis();
-        if (!force && curTime - frameTime < (1000 / 25)) {
-            return;
-        }
-        frameTime = curTime;
-
-        final Rectangle formSize = jFrame.getBounds();
-
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, formSize.width, formSize.height);
-        g.drawImage(img, formSize.width / 2 - img.getWidth() / 2, formSize.height / 2 - img.getHeight() / 2, null);
-        g.dispose();
-        bufferStrategy.show();
-
-        jFrame.setTitle(title);
     }
 
     @Override
@@ -100,12 +60,11 @@ public class MainView implements Runnable {
         jFrame.setVisible(true);
 
         final Container container = jFrame.getContentPane();
-        final FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER);
-        container.setLayout(flowLayout);
+        final CircularLayout circularLayout = new CircularLayout(10);
+        container.setLayout(circularLayout);
 
         jFrame.setIgnoreRepaint(true);
         jFrame.createBufferStrategy(2);
-        bufferStrategy = jFrame.getBufferStrategy();
 
         jFrame.addKeyListener(new KeyListener() {
             @Override

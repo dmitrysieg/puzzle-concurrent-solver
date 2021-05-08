@@ -69,9 +69,19 @@ public class Solver {
         return ownedPieces;
     }
 
+    @Override
+    public String toString() {
+        final String clustersSizeString = getPiecesClusters().stream().map(PiecesCluster::size).map(String::valueOf).collect(Collectors.joining(" "));
+        return new StringBuilder(String.valueOf(getPiecesClusters().size()))
+                .append(" (")
+                .append(clustersSizeString)
+                .append(")")
+                .toString();
+    }
+
     public String getPiecesAsStr() {
         return getSolverCompany().getSolvers().stream()
-                .map(s -> String.valueOf(s.getPiecesClusters().size()))
+                .map(Solver::toString)
                 .collect(Collectors.joining(" ")) + " (=" + pieceRepository.size() + ")";
     }
 
@@ -123,15 +133,14 @@ public class Solver {
         final Profile searchedProfile = airedPieceEntry.getValue().getProfile(airedSide).getComplementaryProfile();
 
         final Optional<Piece> matched = pieceRepository.findPiece(sideToFind, searchedProfile);
-                //.orElseThrow(() -> new IllegalStateException("Can't find matching profile to " + searchedProfile));
+
         if (matched.isPresent()) {
             final Piece piece = matched.get();
             clusterToConsider.piecesMap.put(socket, pieceRepository.pop(piece));
-            //long ts = System.currentTimeMillis();
 
-            view.update(this, clusterToConsider.toImage(), getPiecesAsStr());
+            view.update(this);
+            System.out.println(getPiecesAsStr());
 
-            //System.out.println("show(): " + (System.currentTimeMillis() - ts) + " ms");
         } else {
             // искать сначала в своих кластерах, потом только в чужих.
             Optional<ConfluenceInfo> attemptToFindOwnClusters = askForCluster(searchedProfile, sideToFind, clusterToConsider);
@@ -153,6 +162,9 @@ public class Solver {
 
                 piecesClusters.add(resultCluster);
                 clusterToConsider = resultCluster;
+
+                view.update(this);
+                System.out.println(getPiecesAsStr());
             } else {
                 // try to obtain from other solvers
 
@@ -193,13 +205,16 @@ public class Solver {
                         );
                         whoTakes.getPiecesClusters().add(resultCluster);
                         whoTakes.clusterToConsider = resultCluster;
+                        //view.update(this);
+                        //view.update(solver);
+                        System.out.println(getPiecesAsStr());
 
                         obtainedFromSolvers = true;
 
                         break;
                     }
                 }
-                System.out.println("doPA(): askForClusters(): " + (System.currentTimeMillis() - time2) + " ms");
+                System.out.println(this.getName() + "\t\tdoPA(): askForClusters(): " + (System.currentTimeMillis() - time2) + " ms");
                 if (!obtainedFromSolvers) {
                     //System.out.println(piecesClusters.get(0).toImage64());
                     throw new IllegalStateException("Can't either find a piece in repo, or ask any from other solvers");
@@ -210,14 +225,14 @@ public class Solver {
         // set to bored - strategy can vary todo
         if (random.nextInt(1000) > 997) {
             boredState = true;
-            System.out.println("Got bored!");
+            System.out.println(this.getName() + "\t\tGot bored!");
         }
 
         ownedPieces = recalculateOwnedPieces();
 
         final long tt = (System.currentTimeMillis() - time);
         if (tt < 20) {return;}
-        System.out.println("doPieceApproach(): " + tt + " ms");
+        System.out.println(this.getName() + "\t\tdoPieceApproach(): " + tt + " ms");
     }
 
     private PiecesCluster doSelectCluster() {
@@ -235,7 +250,7 @@ public class Solver {
             if (!piecesClusters.isEmpty()) {
                 return piecesClusters.get(random.nextInt(piecesClusters.size()));
             }
-            System.out.println("Nothing to pick up.");
+            System.out.println(this.getName() + "\t\tNothing to pick up.");
             return null;
         }
 
@@ -291,7 +306,6 @@ public class Solver {
         //System.out.println(mine.toImageMerge64(given, socketPoint, confluencePoint, socketSide));
 
         final BufferedImage mergedImage = mine.toImageMerge(given, socketPoint, confluencePoint, socketSide);
-        view.update(this, mergedImage, getPiecesAsStr());
 
         final Point sideShift = socketPoint.getBy(socketSide);
         final Point shift = Point.of(
@@ -301,7 +315,7 @@ public class Solver {
 
         long time2 = System.currentTimeMillis();
         final List<Map.Entry<Point, Piece>> givenEntries = new ArrayList<>(given.piecesMap.entrySet());
-        System.out.println("mergeClusters(): new ArrayList(): " + (System.currentTimeMillis() - time2) + " ms");
+        System.out.println(this.getName() + "\t\tmergeClusters(): new ArrayList(): " + (System.currentTimeMillis() - time2) + " ms");
         for (final Map.Entry<Point, Piece> entry : givenEntries) {
 
             final Point shifted = Point.of(
@@ -316,7 +330,7 @@ public class Solver {
             given.piecesMap.remove(entry.getKey());
         }
 
-        System.out.println("mergeClusters(): " + (System.currentTimeMillis() - time) + " ms");
+        System.out.println(this.getName() + "\t\tmergeClusters(): " + (System.currentTimeMillis() - time) + " ms");
         return mine;
     }
 
