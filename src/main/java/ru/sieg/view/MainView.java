@@ -53,7 +53,7 @@ public class MainView implements Runnable {
 
     @Override
     public void run() {
-        jFrame = new JFrame();
+        jFrame = new ZoomableFrame();
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setDefaultSize();
         jFrame.setExtendedState(MAXIMIZED_BOTH);
